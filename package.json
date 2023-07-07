@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "A tool to develop npm packages. What npm link should be.",
   "type": "module",
+  "main": "src/index.js",
   "bin": {
-    "physical-link": "./src/index.js"
+    "physical-link": "./src/cli.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
