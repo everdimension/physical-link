@@ -1,0 +1,35 @@
+{
+  "name": "physical-link",
+  "version": "1.0.0",
+  "description": "A tool to develop npm packages. What npm link should be.",
+  "type": "module",
+  "bin": {
+    "physical-link": "./src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "npm",
+    "link",
+    "workflow",
+    "deps",
+    "dependency"
+  ],
+  "author": "everdimension <everdimension@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "ansi-escapes": "^6.2.0",
+    "chokidar": "^3.5.3",
+    "fs-extra": "^11.1.1",
+    "ignore": "^5.2.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/everdimension/physical-link.git"
+  }
+}
