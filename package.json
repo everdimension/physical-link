@@ -4,10 +4,19 @@
   "description": "A tool to develop npm packages. What npm link should be.",
   "type": "module",
   "main": "src/index.js",
+  "types": "types/index.d.ts",
   "bin": {
     "physical-link": "./src/cli.js"
   },
+  "files": [
+    "src",
+    "types"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
   "scripts": {
+    "prepack": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
