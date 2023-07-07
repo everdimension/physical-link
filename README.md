@@ -7,7 +7,7 @@ A small utility library to link package dependencies from your local file system
 - Develop npm packages locally and see the results in other local projects
 - No monorepos
 - No symlinks
-- No file: protoloc schemas in package.json
+- No file: protocol schemas in package.json
 - Doesn't break node resolution like symlinks
 - Works with any bundler
 - Links only the files that npm would [actually publish](https://docs.npmjs.com/cli/v9/using-npm/developers#keeping-files-out-of-your-package)
@@ -93,6 +93,10 @@ Choose this approach if you do not want to alter your project repository in any 
    ```
    physical-link --config ~/path/to/your/global/config --project ~/path/to/your-app
    ```
+
+### Note
+
+Physical Link will only watch packages listed in the `manifest` that are also found in the "dependencies" (or "devDependencies") of your project.
 
 ## Motivation and Workflow
 
