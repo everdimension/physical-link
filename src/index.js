@@ -9,6 +9,8 @@ import { program } from "commander";
 import { cosmiconfigSync } from "cosmiconfig";
 import { logAndRedraw } from "./shared/logAndRedraw.js";
 
+const CLI_NAME = "physical-link";
+
 const defaultIgnorePatterns = [
   ".git",
   "CVS",
@@ -53,21 +55,14 @@ const ignoreFilter =
  */
 function start({ config: configPath, project: projectPath }) {
   const project = projectPath || process.cwd();
-  const explorer = cosmiconfigSync("deplink", {
-    searchPlaces: [
-      "package.json",
-      ".deplinkrc",
-      "deplink.config.js",
-      "deplink.config.cjs",
-      "deplink.config.json",
-    ],
-    packageProp: "deplink",
+  const explorer = cosmiconfigSync(CLI_NAME, {
+    packageProp: CLI_NAME,
   });
   const result = configPath
     ? explorer.load(path.resolve(configPath))
     : explorer.search();
   if (!result) {
-    console.warn("No deplink configuration found.");
+    console.warn(`No ${CLI_NAME} configuration found.`);
     return;
   }
 
@@ -90,7 +85,7 @@ function start({ config: configPath, project: projectPath }) {
 
   if (matchingDeps.length === 0) {
     console.warn(
-      "No matching dependencies were found in the deplink config file."
+      `No matching dependencies were found in the ${CLI_NAME} config file.`
     );
     return;
   }
