@@ -47,19 +47,20 @@ export function physicalLink({ config: configPath, project: projectPath }) {
   }
 
   const config = result.config;
+  const configDir = path.dirname(result.filepath);
   const packageJSON = fs.readJsonSync(path.resolve(project, "./package.json"));
 
-  /** @type {Array<{ name: string, from: string, to: string }>} */
+  /** @type {Array<{ name: string, absPath: string, destination: string }>} */
   let matchingDeps = [];
 
   for (let dep in packageJSON.dependencies) {
     if (config.manifest[dep]) {
-      let from = config.manifest[dep];
-      from = from.replace(/^~(?=$|\/|\\)/, os.homedir());
-      const resolvedFrom = path.resolve(from);
-      const to = path.resolve(project, "./node_modules/", dep);
+      let depPath = config.manifest[dep];
+      depPath = depPath.replace(/^~(?=$|\/|\\)/, os.homedir());
+      const absPath = path.resolve(configDir, depPath);
+      const destination = path.resolve(project, "./node_modules/", dep);
 
-      matchingDeps.push({ name: dep, from: resolvedFrom, to });
+      matchingDeps.push({ name: dep, absPath, destination });
     }
   }
 
@@ -79,11 +80,11 @@ export function physicalLink({ config: configPath, project: projectPath }) {
     const ig = ignore();
     ig.add(defaultIgnorePatterns);
     const depPackageJSON = fs.readJsonSync(
-      path.resolve(dep.from, "./package.json")
+      path.resolve(dep.absPath, "./package.json")
     );
 
-    const gitignorePath = path.join(dep.from, ".gitignore");
-    const npmignorePath = path.join(dep.from, ".npmignore");
+    const gitignorePath = path.join(dep.absPath, ".gitignore");
+    const npmignorePath = path.join(dep.absPath, ".npmignore");
     if (fs.existsSync(npmignorePath)) {
       const npmignore = fs.readFileSync(npmignorePath).toString();
       if (npmignore.trim() !== "") {
@@ -109,9 +110,9 @@ export function physicalLink({ config: configPath, project: projectPath }) {
       });
     }
 
-    const watcher = chokidar.watch(dep.from, {
+    const watcher = chokidar.watch(dep.absPath, {
       ignored: (src) =>
-        src === dep.from ? false : ig.ignores(path.relative(dep.from, src)),
+        src === dep.absPath ? false : ig.ignores(path.relative(dep.absPath, src)),
     });
 
     watcher.on("all", () => {
@@ -127,10 +128,10 @@ export function physicalLink({ config: configPath, project: projectPath }) {
       );
 
       const filter = ig.createFilter();
-      fs.copySync(dep.from, dep.to, {
+      fs.copySync(dep.absPath, dep.destination, {
         overwrite: true,
         filter: (src) =>
-          dep.from === src ? true : filter(path.relative(dep.from, src)),
+          dep.absPath === src ? true : filter(path.relative(dep.absPath, src)),
       });
     });
   }
