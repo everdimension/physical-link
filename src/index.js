@@ -5,6 +5,7 @@ import os from "os";
 import ignore from "ignore";
 import { cosmiconfigSync } from "cosmiconfig";
 import { logAndRedraw } from "./shared/logAndRedraw.js";
+import { yellow } from "./shared/color-output.js";
 
 const CLI_NAME = "physical-link";
 
@@ -53,15 +54,25 @@ export function physicalLink({ config: configPath, project: projectPath }) {
   /** @type {Array<{ name: string, absPath: string, destination: string }>} */
   let matchingDeps = [];
 
-  for (let dep in packageJSON.dependencies) {
-    if (config.manifest[dep]) {
-      let depPath = config.manifest[dep];
-      depPath = depPath.replace(/^~(?=$|\/|\\)/, os.homedir());
-      const absPath = path.resolve(configDir, depPath);
-      const destination = path.resolve(project, "./node_modules/", dep);
+  /** @type {Array<string>} */
+  const warnings = [];
 
-      matchingDeps.push({ name: dep, absPath, destination });
+  const packageJSONDeps = packageJSON.dependencies || {};
+  const packageJSONDevDeps = packageJSON.devDependencies || {};
+
+  for (let dep in config.manifest) {
+    if (
+      dep in packageJSONDeps === false &&
+      dep in packageJSONDevDeps === false
+    ) {
+      const msg = `Warning: ${dep} is not listed as a dependency of current project. It will be watched and synced anyway.`;
+      warnings.push(yellow(msg));
     }
+    let depPath = config.manifest[dep];
+    depPath = depPath.replace(/^~(?=$|\/|\\)/, os.homedir());
+    const absPath = path.resolve(configDir, depPath);
+    const destination = path.resolve(project, "./node_modules/", dep);
+    matchingDeps.push({ name: dep, absPath, destination });
   }
 
   if (matchingDeps.length === 0) {
@@ -72,8 +83,11 @@ export function physicalLink({ config: configPath, project: projectPath }) {
   }
 
   logAndRedraw(
-    "Watching dependencies:\n" +
-      matchingDeps.map((d) => `  ${d.name}`).join("\n")
+    [
+      ...warnings,
+      "Watching dependencies:",
+      ...matchingDeps.map((d) => `  ${d.name}`),
+    ].join("\n")
   );
 
   for (let dep of matchingDeps) {
@@ -112,12 +126,15 @@ export function physicalLink({ config: configPath, project: projectPath }) {
 
     const watcher = chokidar.watch(dep.absPath, {
       ignored: (src) =>
-        src === dep.absPath ? false : ig.ignores(path.relative(dep.absPath, src)),
+        src === dep.absPath
+          ? false
+          : ig.ignores(path.relative(dep.absPath, src)),
     });
 
     watcher.on("all", () => {
       logAndRedraw(
         [
+          ...warnings,
           "Watching dependencies:",
           ...matchingDeps.map((d) => `  ${d.name}`),
           "",
