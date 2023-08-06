@@ -1,6 +1,6 @@
 {
   "name": "physical-link",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A tool to develop npm packages. What npm link should be.",
   "type": "module",
   "main": "src/index.js",
