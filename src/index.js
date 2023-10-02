@@ -115,7 +115,8 @@ export function physicalLink({ config: configPath, project: projectPath }) {
 
     if (depPackageJSON.main) {
       // do not ignore the whole folder from the "main" field
-      ig.add(`!${path.dirname(depPackageJSON.main)}`);
+      const dirName = path.dirname(depPackageJSON.main);
+      ig.add(`!${path.relative(dep.absPath, path.join(dep.absPath, dirName))}`);
     }
     if (depPackageJSON.files) {
       // do not ignore files from the "files" field
@@ -147,8 +148,12 @@ export function physicalLink({ config: configPath, project: projectPath }) {
       const filter = ig.createFilter();
       fs.copySync(dep.absPath, dep.destination, {
         overwrite: true,
-        filter: (src) =>
-          dep.absPath === src ? true : filter(path.relative(dep.absPath, src)),
+        filter: (src) => {
+          if (dep.absPath === src) {
+            return true;
+          }
+          return filter(path.relative(dep.absPath, src));
+        },
       });
     });
   }
