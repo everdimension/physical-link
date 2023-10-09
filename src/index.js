@@ -113,11 +113,6 @@ export function physicalLink({ config: configPath, project: projectPath }) {
       }
     }
 
-    if (depPackageJSON.main) {
-      // do not ignore the whole folder from the "main" field
-      const dirName = path.dirname(depPackageJSON.main);
-      ig.add(`!${path.relative(dep.absPath, path.join(dep.absPath, dirName))}`);
-    }
     if (depPackageJSON.files) {
       // do not ignore files from the "files" field
       depPackageJSON.files.forEach((/** @type {string} */ path) => {
