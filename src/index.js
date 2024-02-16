@@ -121,10 +121,15 @@ export function physicalLink({ config: configPath, project: projectPath }) {
     }
 
     const watcher = chokidar.watch(dep.absPath, {
-      ignored: (src) =>
-        src === dep.absPath
-          ? false
-          : ig.ignores(path.relative(dep.absPath, src)),
+      ignored: (src) => {
+        const relativePath = path.relative(dep.absPath, src);
+        // Validate the path before calling ig.ignores
+        if (relativePath && relativePath.trim() !== '') {
+          return src === dep.absPath ? false : ig.ignores(relativePath);
+        }
+        // Ignore invalid or empty paths
+        return true;
+      },
     });
 
     watcher.on("all", () => {
