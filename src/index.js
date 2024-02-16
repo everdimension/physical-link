@@ -93,38 +93,47 @@ export function physicalLink({ config: configPath, project: projectPath }) {
   for (let dep of matchingDeps) {
     const ig = ignore();
     ig.add(defaultIgnorePatterns);
-    const depPackageJSON = fs.readJsonSync(
-      path.resolve(dep.absPath, "./package.json")
-    );
 
     const gitignorePath = path.join(dep.absPath, ".gitignore");
     const npmignorePath = path.join(dep.absPath, ".npmignore");
     if (fs.existsSync(npmignorePath)) {
-      const npmignore = fs.readFileSync(npmignorePath).toString();
-      if (npmignore.trim() !== "") {
-        ig.add(npmignore);
-      }
+      ig.add(fs.readFileSync(npmignorePath, "utf8"));
     } else if (fs.existsSync(gitignorePath)) {
-      // npm uses `.gitignore` only if `.npmignore` is not found:
-      // https://docs.npmjs.com/cli/v9/using-npm/developers#keeping-files-out-of-your-package
-      const gitignore = fs.readFileSync(gitignorePath).toString();
-      if (gitignore.trim() !== "") {
-        ig.add(gitignore);
-      }
+      ig.add(fs.readFileSync(gitignorePath, "utf8"));
     }
 
-    if (depPackageJSON.files) {
-      // do not ignore files from the "files" field
-      depPackageJSON.files.forEach((/** @type {string} */ path) => {
-        ig.add(`!${path}`);
-      });
+    // Add files specified in the "files" field of package.json to the ignore list as exceptions
+    const depPackageJSONPath = path.resolve(dep.absPath, "package.json");
+    if (fs.existsSync(depPackageJSONPath)) {
+      const depPackageJSON = fs.readJsonSync(depPackageJSONPath);
+      if (depPackageJSON.files) {
+        depPackageJSON.files.forEach((/** @type {any} */ file) => {
+          ig.add(`!${file}`);
+        });
+      }
+    } else {
+      console.error(`package.json not found in ${dep.absPath}. Ensure the path is correct.`);
     }
 
     const watcher = chokidar.watch(dep.absPath, {
-      ignored: (src) =>
-        src === dep.absPath
-          ? false
-          : ig.ignores(path.relative(dep.absPath, src)),
+      ignored: (src) => {
+        const normalizedSrc = path.normalize(src);
+        const normalizedDepAbsPath = path.normalize(dep.absPath);
+
+        // Skip ignore check for the root directory; it's always included
+        if (normalizedSrc === normalizedDepAbsPath) {
+          return false;
+        }
+
+        // Calculate relative path for all other paths
+        const relativePath = path.relative(normalizedDepAbsPath, normalizedSrc);
+        if (relativePath === '') {
+          return false; // Do not ignore the root directory itself
+        }
+
+        // For all other paths, proceed with the ignore check
+        return ig.ignores(relativePath);
+      },
     });
 
     watcher.on("all", () => {
@@ -133,7 +142,6 @@ export function physicalLink({ config: configPath, project: projectPath }) {
           ...warnings,
           "Watching dependencies:",
           ...matchingDeps.map((d) => `  ${d.name}`),
-          "",
           "",
           `Last change detected in: ${dep.name}`,
           `Timestamp: ${new Date().toLocaleString()}`,
@@ -144,9 +152,11 @@ export function physicalLink({ config: configPath, project: projectPath }) {
       fs.copySync(dep.absPath, dep.destination, {
         overwrite: true,
         filter: (src) => {
-          if (dep.absPath === src) {
-            return true;
+          // Correctly use the filter to decide if a file should be copied
+          if (path.normalize(dep.absPath) === path.normalize(src)) {
+            return true; // Always include the base directory
           }
+          // @ts-ignore
           return filter(path.relative(dep.absPath, src));
         },
       });
