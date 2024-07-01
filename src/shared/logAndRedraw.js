@@ -8,7 +8,8 @@ let numLinesPrevLog = 0;
  * @returns {void}
  */
 export function logAndRedraw(message) {
-  process.stdout.write(ansiEscapes.eraseLines(numLinesPrevLog));
-  process.stdout.write(message);
-  numLinesPrevLog = message.split("\n").length;
+  console.log(message)
+  // process.stdout.write(ansiEscapes.eraseLines(numLinesPrevLog));
+  // process.stdout.write(message);
+  // numLinesPrevLog = message.split("\n").length;
 }
