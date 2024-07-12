@@ -39,8 +39,8 @@ Choose this approach if you're ready to commit a config file to your project and
    ```javascript
    module.exports = {
      manifest: {
-       "my-dependency": "~/my-dependency",
-       "another-dependency": "../another-dependency",
+       "my-dependency": "../projects/my-dependency",
+       "another-dependency": "~/another-dependency",
      },
    };
    ```
@@ -113,7 +113,7 @@ With Physical Link, you can drastically simplify this workflow. Here's how:
    ```javascript
    module.exports = {
      manifest: {
-       "awesome-package": "~/path/to/awesome-package",
+       "awesome-package": "../projects/awesome-package",
        // ...other local packages you're developing
      },
    };
